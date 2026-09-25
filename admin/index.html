@@ -13811,6 +13811,7 @@
 					selectedIds: new Set(),
 					nextResultId: 1,
 					sort: { key: "latency", dir: "asc" },
+									speedFloor: null, // 测速完成后设为30，仅显示30Mbps以上
 					resultSelectionDrag: null,
 					speedBatchDrag: null,
 					suppressResultClick: false,
@@ -14499,6 +14500,7 @@
 					state.selectedIds.clear();
 					state.nextResultId = 1;
 					state.sort = { key: "latency", dir: "asc" };
+								state.speedFloor = null; // 重新优选时清除速度下限过滤，显示全部结果
 					resetResultFilters();
 					renderResults();
 
@@ -14881,6 +14883,12 @@
 					} else {
 						if (els.speedStatus) els.speedStatus.textContent = "全部测速完成";
 					}
+								if (!run.stopped) {
+									// ===== 新增：测速完成后按速度从高到低排列 =====
+									state.sort = { key: "speed", dir: "desc" };
+									state.speedFloor = 30; // 只显示 30Mbps 以上
+									renderResults();
+								}
 
 					state.speedRun = null;
 					if (els.speedAllBtn) {
@@ -15647,7 +15655,7 @@
 				}
 
 				function getVisibleSortedResults() {
-					return getSortedResults().filter(({ item }) => resultMatchesFilters(item));
+					return getSortedResults().filter(({ item }) => resultMatchesFilters(item) && (state.speedFloor == null || (item.speedState === "done" && Number.isFinite(item.speedMbps) && item.speedMbps >= state.speedFloor)));
 				}
 
 				function visibleResultIds() {
