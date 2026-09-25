@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -14538,6 +14538,12 @@
 					} else {
 						els.latencyStatus.textContent = `优选完成，${state.results.length} 个可用`;
 					}
+						// ===== 新增：优选完成后自动开始测速（固定 3 个 IP 并发，直到全部测完）=====
+						if (state.results.length) {
+							window.setTimeout(() => {
+							void startAllSpeedTests();
+							}, 50);
+						}
 					state.latencyRun = null;
 					els.latencyBtn.classList.remove("danger");
 					els.latencyBtn.innerHTML = `${svgPulseIcon()}优选延迟`;
@@ -14700,7 +14706,7 @@
 					if (!targets.length) return;
 
 					const settings = readSettings();
-					const concurrency = Math.min(4, Math.max(1, Math.ceil(settings.threads / 8)));
+					const concurrency = 3; // 固定并发 3 个 IP 同时测速，保证准确性
 					const run = {
 						stopped: false,
 						controllers: new Set(),
@@ -14822,7 +14828,7 @@
 				async function startAllSpeedTests() {
 					if (!state.results.length) return;
 					const settings = readSettings();
-					const concurrency = Math.max(1, Math.ceil(settings.threads / 8));
+					const concurrency = 3; // 固定并发 3 个 IP 同时测速，保证准确性
 					const run = {
 						stopped: false,
 						controllers: new Set(),
