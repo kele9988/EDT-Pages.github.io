@@ -13633,7 +13633,7 @@
 								</div>
 								<div class="result-actions-group">
 									<span class="tiny muted selection-status" id="selectionStatus">已选 0 个</span>
-									<button class="btn success" id="saveSelectedBtn" type="button" disabled>保存</button>
+									<button class="btn success" id="saveSelectedBtn" type="button" disabled>保存</button>									<span class="tiny muted" id="syncGithubStatus" style="margin-right:8px"></span>									<button class="btn secondary" id="syncGithubBtn" type="button">同步到Github</button>
 									<button class="btn secondary" id="closeBestCFBtn" type="button">关闭</button>
 								</div>
 							</div>
@@ -13956,6 +13956,7 @@
 					});
 					els.invertSelectBtn.addEventListener("click", invertSelectedResults);
 					els.clearSelectBtn.addEventListener("click", resetResultSelection);
+					els.syncGithubBtn.addEventListener("click", syncToGithub);
 					els.saveSelectedBtn.addEventListener("pointerdown", startSaveSelectedLongPress);
 					els.saveSelectedBtn.addEventListener("pointerup", finishSaveSelectedLongPress);
 					els.saveSelectedBtn.addEventListener("pointercancel", finishSaveSelectedLongPress);
@@ -15204,6 +15205,57 @@
 					return state.results.filter((item) => state.selectedIds.has(String(item.id)));
 				}
 
+				function syncToGithub() {
+					const newLines = selectedResults().map((item, seq) => formatResultForAdmin(item, seq + 1)).filter(Boolean);
+					if (!newLines.length) { updateSelectionState(); return; }
+					let token = localStorage.getItem("bestcf_gh_token");
+					if (!token) {
+						token = (prompt("请输入 GitHub Token（仅保存在本机浏览器，不会写入代码）：") || "").trim();
+						if (!token) { syncStatus("已取消"); return; }
+						localStorage.setItem("bestcf_gh_token", token);
+					}
+					const owner = "kele9988", repo = "cf-best-ip", path = "web.txt";
+					const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+					const h = { "Authorization": `token ${token}`, "Content-Type": "application/json", "User-Agent": "cf-best-sync" };
+					const keyOf = (line) => line.split("#")[0].trim();
+					const mbpsOf = (line) => { const m = line.match(/([\d.]+)Mbps\s*\]\s*$/); return m ? parseFloat(m[1]) : -1; };
+					(async () => {
+						// 1) 读取现有 web.txt（增量合并）
+						let existing = [];
+						try {
+							const g = await fetch(api, { headers: h });
+							if (g.ok) {
+								const info = await g.json();
+								const text = decodeURIComponent(escape(atob(info.content)));
+								existing = text.split("\n").map(s => s.trim()).filter(Boolean);
+							}
+						} catch (e) { /* 首次无文件或读取失败则忽略 */ }
+						// 2) 合并去重：以 IP:端口 为 key，新结果优先覆盖
+						const merged = new Map();
+						existing.forEach(l => { const k = keyOf(l); if (k && !merged.has(k)) merged.set(k, l); });
+						newLines.forEach(l => { const k = keyOf(l); if (k) merged.set(k, l); });
+						// 3) 按速度降序排序
+						const arr = [...merged.values()].sort((a, b) => mbpsOf(b) - mbpsOf(a));
+						// 4) 写回
+						const content = arr.join("\n") + "\n";
+						const b64 = btoa(unescape(encodeURIComponent(content)));
+						const doPut = (sha) => fetch(api, { method: "PUT", headers: h,
+							body: JSON.stringify({ message: "sync+dedupe from BestCF", content: b64, ...(sha ? { sha } : {}) }) });
+						const r = await doPut();
+						if (r.ok) { syncStatus(`已同步 ${newLines.length} 条，web.txt 累计 ${arr.length} 条 ✓`); return; }
+						if (r.status === 409 || r.status === 422) {
+							const info = await (await fetch(api, { headers: h })).json();
+							const r2 = await doPut(info.sha);
+							if (r2.ok) syncStatus(`已同步 ${newLines.length} 条，web.txt 累计 ${arr.length} 条 ✓`);
+							else syncStatus("同步失败 " + r2.status);
+						} else syncStatus("同步失败 " + r.status);
+					})().catch((e) => syncStatus("同步失败 " + e.message));
+				}
+				function syncStatus(msg) {
+					const el = document.getElementById("syncGithubStatus");
+					if (el) el.textContent = msg;
+					else alert(msg);
+				}
 				function saveSelectedResults() {
 					const lines = selectedResults().map((item, seq) => formatResultForAdmin(item, seq + 1)).filter(Boolean);
 					if (!lines.length) {
