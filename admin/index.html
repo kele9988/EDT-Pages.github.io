@@ -13543,6 +13543,18 @@
 												</div>
 												<input class="input" id="portInput" type="number" min="0" max="65535"
 													step="1" value="0">
+											<div class="field">
+
+												<div class="label-row">
+
+													<label for="speedFloorInput">达标速度 Mbps</label>
+
+												</div>
+
+												<input class="input" id="speedFloorInput" type="number" min="0" max="10000" step="1" value="30">
+
+											</div>
+
 											</div>
 										</div>
 									</div>
@@ -13841,6 +13853,7 @@
 					timeoutInput: $("#timeoutInput"),
 					threadsInput: $("#threadsInput"),
 					portInput: $("#portInput"),
+				speedFloorInput: $("#speedFloorInput"),
 					latencyBtn: $("#latencyBtn"),
 					latencyStatus: $("#latencyStatus"),
 					latencyProgress: $("#latencyProgress"),
@@ -14884,7 +14897,7 @@
 						if (!run.stopped) {
 							// ===== 新增：测速完成后按速度从高到低排列 =====
 							state.sort = { key: "speed", dir: "desc" };
-							state.speedFloor = 30; // 只显示 30Mbps 以上
+							state.speedFloor = settings.speedFloor; // 只显示达标速度以上
 							renderResults();
 						}
 					}
@@ -14994,7 +15007,7 @@
 					syncSpeedTestingTimer();
 					els.resultCount.textContent = hasActiveFilter
 						? `${rows.length} / ${state.results.length} 个可用`
-						: `${state.results.length} 个可用`;
+						: `总共 ${state.results.length} 个可用，速度达标的有 ${state.results.filter((item) => item.speedState === "done" && Number.isFinite(item.speedMbps) && (state.speedFloor == null || item.speedMbps >= state.speedFloor)).length} 个`;
 					renderSortMarks();
 					renderFilterHeaderState();
 					syncOpenResultFilterMenu();
@@ -16080,12 +16093,13 @@ function formatResultForAdmin(item, seq) {
 				}
 
 				function readSettings() {
-					[els.limitInput, els.timeoutInput, els.threadsInput, els.portInput].forEach((input) => clampNumberInput(input));
+					[els.limitInput, els.timeoutInput, els.threadsInput, els.portInput, els.speedFloorInput].forEach((input) => clampNumberInput(input));
 					return {
 						limit: Number(els.limitInput.value),
 						timeout: Number(els.timeoutInput.value),
 						threads: Number(els.threadsInput.value),
-						port: Number(els.portInput.value)
+						port: Number(els.portInput.value),
+						speedFloor: Number(els.speedFloorInput.value)
 					};
 				}
 
