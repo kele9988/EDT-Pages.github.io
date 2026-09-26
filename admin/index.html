@@ -13535,7 +13535,7 @@
 												<input class="input" id="threadsInput" type="number" min="1" max="32"
 													step="1" value="16">
 											</div>
-						<div class="field"> 							<div class="label-row"> 								<label for="portInput">优选端口</label> 								<span class="help-tip" tabindex="0" role="img" aria-label="端口说明" 									data-tip="端口为 0 时，随机设置 443、2053、2083、2087、2096、8443 端口。">!</span> 							</div> 							<input class="input" id="portInput" type="number" min="0" max="65535" 								step="1" value="0"> 						</div> 						<div class="field"> 							<label for="speedFloorInput">达标速度 Mbps</label> 							<input class="input" id="speedFloorInput" type="number" min="0" max="10000" step="1" value="30"> 						</div> 					</div>
+						<div class="field"> 							<div class="label-row"> 								<label for="portInput">优选端口</label> 								<span class="help-tip" tabindex="0" role="img" aria-label="端口说明" 									data-tip="端口为 0 时，随机设置 443、2053、2083、2087、2096、8443 端口。">!</span> 							</div> 							<input class="input" id="portInput" type="number" min="0" max="65535" 								step="1" value="0"> 						</div> 						<div class="field"> 							<label for="speedFloorInput">达标速度 Mbps</label> 							<input class="input" id="speedFloorInput" type="number" min="0" max="10000" step="1" value="10"> 						</div> 					</div>
 									</div>
 								</details>
 
@@ -14984,9 +14984,9 @@
 					const rows = getVisibleSortedResults();
 					const hasActiveFilter = hasActiveResultFilters();
 					syncSpeedTestingTimer();
-					els.resultCount.textContent = hasActiveFilter
+					els.resultCount.innerHTML = hasActiveFilter
 						? `${rows.length} / ${state.results.length} 个可用`
-						: `总共 ${state.results.length} 个可用，速度达标的有 ${state.results.filter((item) => item.speedState === "done" && Number.isFinite(item.speedMbps) && (state.speedFloor == null || item.speedMbps >= state.speedFloor)).length} 个`;
+						: `总共：<span style="color:#22c55e;font-weight:600">${state.results.length}</span> 个，达标：<span style="color:#22c55e;font-weight:600">${state.results.filter((item) => item.speedState === "done" && Number.isFinite(item.speedMbps) && (state.speedFloor == null || item.speedMbps >= state.speedFloor)).length}</span> 个，测速剩余：<span style="color:#22c55e;font-weight:600">${state.results.filter((item) => item.speedState === "pending" || item.speedState === "testing").length}</span> 个`;
 					renderSortMarks();
 					renderFilterHeaderState();
 					syncOpenResultFilterMenu();
@@ -15676,6 +15676,10 @@ function formatResultForAdmin(item, seq) {
 					return state.results
 						.map((item, index) => ({ item, index }))
 						.sort((a, b) => {
+							const aTesting = a.item.speedState === "testing";
+							const bTesting = b.item.speedState === "testing";
+							if (aTesting && !bTesting) return -1;
+							if (!aTesting && bTesting) return 1;
 							const left = sortValue(a.item, state.sort.key);
 							const right = sortValue(b.item, state.sort.key);
 							const emptyCompared = compareEmptyValue(left, right);
