@@ -14836,6 +14836,7 @@
 						total: state.results.length
 					};
 					state.speedRun = run;
+					state.sort = { key: "speed", dir: "desc" }; // 测速过程中自动按速度从高到低排列
 					if (els.speedAllBtn) {
 						els.speedAllBtn.classList.add("danger");
 						els.speedAllBtn.innerHTML = `${svgStopIcon()}停止测速`;
@@ -14880,6 +14881,12 @@
 						if (els.speedStatus) els.speedStatus.textContent = "测速已停止";
 					} else {
 						if (els.speedStatus) els.speedStatus.textContent = "全部测速完成";
+						if (!run.stopped) {
+							// ===== 新增：测速完成后按速度从高到低排列 =====
+							state.sort = { key: "speed", dir: "desc" };
+							state.speedFloor = 30; // 只显示 30Mbps 以上
+							renderResults();
+						}
 					}
 
 					state.speedRun = null;
@@ -15660,7 +15667,7 @@ function formatResultForAdmin(item, seq) {
 				}
 
 				function getVisibleSortedResults() {
-					return getSortedResults().filter(({ item }) => resultMatchesFilters(item));
+					return getSortedResults().filter(({ item }) => resultMatchesFilters(item) && (state.speedFloor == null || (item.speedState === "done" && Number.isFinite(item.speedMbps) && item.speedMbps >= state.speedFloor)));
 				}
 
 				function visibleResultIds() {
