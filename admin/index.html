@@ -13811,7 +13811,6 @@
 					selectedIds: new Set(),
 					nextResultId: 1,
 					sort: { key: "latency", dir: "asc" },
-									speedFloor: null, // 测速完成后设为30，仅显示30Mbps以上
 					resultSelectionDrag: null,
 					speedBatchDrag: null,
 					suppressResultClick: false,
@@ -14500,7 +14499,6 @@
 					state.selectedIds.clear();
 					state.nextResultId = 1;
 					state.sort = { key: "latency", dir: "asc" };
-								state.speedFloor = null; // 重新优选时清除速度下限过滤，显示全部结果
 					resetResultFilters();
 					renderResults();
 
@@ -14883,12 +14881,6 @@
 					} else {
 						if (els.speedStatus) els.speedStatus.textContent = "全部测速完成";
 					}
-								if (!run.stopped) {
-									// ===== 新增：测速完成后按速度从高到低排列 =====
-									state.sort = { key: "speed", dir: "desc" };
-									state.speedFloor = 30; // 只显示 30Mbps 以上
-									renderResults();
-								}
 
 					state.speedRun = null;
 					if (els.speedAllBtn) {
@@ -15214,7 +15206,7 @@
 				}
 
 				function saveSelectedResults() {
-					const lines = selectedResults().map(formatResultForAdmin).filter(Boolean);
+					const lines = selectedResults().map((item, seq) => formatResultForAdmin(item, seq + 1)).filter(Boolean);
 					if (!lines.length) {
 						updateSelectionState();
 						return;
@@ -15353,12 +15345,25 @@
 					window.setTimeout(() => URL.revokeObjectURL(url), 0);
 				}
 
-				function formatResultForAdmin(item) {
+				function toSuperScript(num) {
+	const supers = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+	return String(num).split("").map((c) => supers[c] || c).join("");
+}
+
+const regionCnMap = {
+	TW: "台湾", HK: "香港", JP: "日本", SG: "新加坡", US: "美国",
+	KR: "韩国", MY: "马来西亚", TH: "泰国", VN: "越南", PH: "菲律宾",
+	ID: "印尼", IN: "印度", AU: "澳大利亚", GB: "英国", DE: "德国",
+	FR: "法国", NL: "荷兰", RU: "俄罗斯", CA: "加拿大", MX: "墨西哥",
+	BR: "巴西", AE: "阿联酋", SA: "沙特", TR: "土耳其", PL: "波兰",
+	SE: "瑞典", IT: "意大利", ES: "西班牙", CZ: "捷克", CH: "瑞士"
+};
+function formatResultForAdmin(item, seq) {
 					const details = [`${item.latency}ms`];
 					if (item.speedState === "done" && Number.isFinite(item.speedMbps) && item.speedMbps > 0) {
 						details.push(`${formatSpeedMbps(item.speedMbps)}Mbps`);
 					}
-					return `${item.address}#${item.country} ${item.type}[${details.join(" ")}]`;
+					return `${item.address}#${item.country} ${regionCnMap[item.country] || item.country}${toSuperScript(seq)}[${details.join(" ")}]`;
 				}
 
 				function sendSelectedResultsToParent(lines) {
@@ -15655,7 +15660,7 @@
 				}
 
 				function getVisibleSortedResults() {
-					return getSortedResults().filter(({ item }) => resultMatchesFilters(item) && (state.speedFloor == null || (item.speedState === "done" && Number.isFinite(item.speedMbps) && item.speedMbps >= state.speedFloor)));
+					return getSortedResults().filter(({ item }) => resultMatchesFilters(item));
 				}
 
 				function visibleResultIds() {
