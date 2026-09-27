@@ -13956,7 +13956,7 @@
 					});
 					els.invertSelectBtn.addEventListener("click", invertSelectedResults);
 					els.clearSelectBtn.addEventListener("click", resetResultSelection);
-					els.syncGithubBtn.addEventListener("click", syncToGithub);
+					const _syncBtn = document.getElementById("syncGithubBtn"); if (_syncBtn) _syncBtn.addEventListener("click", syncToGithub);
 					els.saveSelectedBtn.addEventListener("pointerdown", startSaveSelectedLongPress);
 					els.saveSelectedBtn.addEventListener("pointerup", finishSaveSelectedLongPress);
 					els.saveSelectedBtn.addEventListener("pointercancel", finishSaveSelectedLongPress);
