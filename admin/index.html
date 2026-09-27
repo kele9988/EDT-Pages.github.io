@@ -14900,7 +14900,7 @@
 				}
 
 				async function testDownloadSpeed(parsed, run, onProgress) {
-					const url = buildProbeUrl(parsed, "__down", { bytes: "20000000" });
+					const url = buildProbeUrl(parsed, "__down", { bytes: "5000000" });
 					const controller = new AbortController();
 					const maxDuration = 10000;
 					let timedOut = false;
@@ -15206,7 +15206,7 @@
 				}
 
 				function syncToGithub() {
-					const newLines = selectedResults().map((item, seq) => formatResultForAdmin(item, seq + 1)).filter(Boolean);
+					const newLines = (() => { const __seq = {}; return selectedResults().map((item) => { const c = __seq[item.country] = (__seq[item.country] || 0) + 1; return formatResultForAdmin(item, c); }).filter(Boolean); })();
 					if (!newLines.length) { updateSelectionState(); return; }
 					let token = localStorage.getItem("bestcf_gh_token");
 					if (!token) {
@@ -15257,7 +15257,7 @@
 					else alert(msg);
 				}
 				function saveSelectedResults() {
-					const lines = selectedResults().map((item, seq) => formatResultForAdmin(item, seq + 1)).filter(Boolean);
+					const lines = (() => { const __seq = {}; return selectedResults().map((item) => { const c = __seq[item.country] = (__seq[item.country] || 0) + 1; return formatResultForAdmin(item, c); }).filter(Boolean); })();
 					if (!lines.length) {
 						updateSelectionState();
 						return;
