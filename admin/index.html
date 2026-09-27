@@ -14743,7 +14743,7 @@
 							if (els.speedStatus) els.speedStatus.textContent = `正在测速 ${run.completed} / ${run.total}`;
 							renderResults();
 						}
-					}, run);
+					}, run, 0.15);
 
 					if (run.stopped) {
 						targets.forEach(({ result }) => {
@@ -14865,7 +14865,7 @@
 							if (els.speedStatus) els.speedStatus.textContent = `正在测速 ${run.completed} / ${run.total}`;
 							renderResults();
 						}
-					}, run);
+					}, run, 0.15);
 
 					if (run.stopped) {
 						state.results.forEach((item) => {
@@ -16148,10 +16148,11 @@ function formatResultForAdmin(item, seq) {
 					input.value = String(value);
 				}
 
-				async function runPool(items, concurrency, worker, run) {
+				async function runPool(items, concurrency, worker, run, stagger = 0) {
 					let cursor = 0;
 					const size = Math.min(Math.max(1, concurrency), items.length);
-					const workers = Array.from({ length: size }, async () => {
+					const workers = Array.from({ length: size }, async (_, idx) => {
+						if (stagger > 0) await new Promise((r) => setTimeout(r, idx * stagger));
 						while (!run.stopped && cursor < items.length) {
 							const index = cursor;
 							cursor += 1;
