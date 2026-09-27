@@ -15410,7 +15410,7 @@ const regionCnMap = {
 	SE: "瑞典", IT: "意大利", ES: "西班牙", CZ: "捷克", CH: "瑞士"
 };
 function formatResultForAdmin(item, seq) {
-					const details = [`${item.latency}ms`];
+					const details = [];
 					if (item.speedState === "done" && Number.isFinite(item.speedMbps) && item.speedMbps > 0) {
 						details.push(`${formatSpeedMbps(item.speedMbps)}Mbps`);
 					}
