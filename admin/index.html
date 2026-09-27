@@ -14699,7 +14699,7 @@
 					if (!targets.length) return;
 
 					const settings = readSettings();
-					const concurrency = 3; // 固定并发 3 个 IP 同时测速，保证准确性
+					const concurrency = 5; // 固定并发 5 个 IP 同时测速
 					const run = {
 						stopped: false,
 						controllers: new Set(),
@@ -14743,7 +14743,7 @@
 							if (els.speedStatus) els.speedStatus.textContent = `正在测速 ${run.completed} / ${run.total}`;
 							renderResults();
 						}
-					}, run, 0.15);
+					}, run, 1.0);
 
 					if (run.stopped) {
 						targets.forEach(({ result }) => {
@@ -14821,7 +14821,7 @@
 				async function startAllSpeedTests() {
 					if (!state.results.length) return;
 					const settings = readSettings();
-					const concurrency = 3; // 固定并发 3 个 IP 同时测速，保证准确性
+					const concurrency = 5; // 固定并发 5 个 IP 同时测速
 					const run = {
 						stopped: false,
 						controllers: new Set(),
@@ -14865,7 +14865,7 @@
 							if (els.speedStatus) els.speedStatus.textContent = `正在测速 ${run.completed} / ${run.total}`;
 							renderResults();
 						}
-					}, run, 0.15);
+					}, run, 1.0);
 
 					if (run.stopped) {
 						state.results.forEach((item) => {
